@@ -1,0 +1,54 @@
+<!-- NeonPlan 3D Admin Control Panel -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          <i class="glyphicon glyphicon-th"></i> <#LANG_NEONPLAN3D_ADMIN_TITLE#>
+        </h3>
+      </div>
+      <div class="panel-body">
+        <div class="row" style="margin-bottom: 20px;">
+          <div class="col-sm-4 text-center">
+            <div class="well well-sm">
+              <h4>[#PLANS_TOTAL#]</h4>
+              <p><#LANG_NEONPLAN3D_PLANS_STORED#></p>
+            </div>
+          </div>
+          <div class="col-sm-4 text-center">
+            <div class="well well-sm">
+              <h4>[#DEVICES_TOTAL#]</h4>
+              <p><#LANG_NEONPLAN3D_CONNECTED_DEVICES#></p>
+            </div>
+          </div>
+          <div class="col-sm-4 text-center">
+            <div class="well well-sm">
+              <h4>[#ROOMS_TOTAL#]</h4>
+              <p><#LANG_NEONPLAN3D_CONNECTED_ROOMS#></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center" style="margin-bottom: 25px;">
+          <a href="<#ROOTHTML#>module/neonplan3d.html" target="_blank" class="btn btn-primary btn-lg" style="background-color: #00bcd4; border-color: #00acc1;">
+            <i class="glyphicon glyphicon-fullscreen"></i> <#LANG_NEONPLAN3D_OPEN_FULLSCREEN#>
+          </a>
+        </div>
+
+        <div class="panel panel-info">
+          <div class="panel-heading">
+            <h4 class="panel-title"><#LANG_NEONPLAN3D_EMBED_TITLE#></h4>
+          </div>
+          <div class="panel-body">
+            <p><#LANG_NEONPLAN3D_EMBED_SCENES#></p>
+            <pre><code>&lt;iframe src="<#ROOTHTML#>module/neonplan3d.html" style="width:100%; height:800px; border:none;"&gt;&lt;/iframe&gt;</code></pre>
+          </div>
+        </div>
+
+        <div style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden; height: 650px; background: #070b14;">
+          <iframe src="<#ROOTHTML#>module/neonplan3d.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>NeonPlan 3D – MajorDoMo</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #070b14;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #00e5ff;
+      background: #070b14;
+      z-index: 100;
+      transition: opacity 0.4s ease;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(0, 229, 255, 0.2);
+      border-top-color: #00e5ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    neonplan3d-panel {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Загрузка 3D-плана NeonPlan...</div>
+  </div>
+
+  <neonplan3d-panel id="panel"></neonplan3d-panel>
+
+  <script type="module">
+    import "/templates/neonplan3d/assets/neonplan3d.js";
+    import { MajorDoMoHassAdapter } from "/templates/neonplan3d/adapter.js";
+
+    async function bootstrap() {
+      const loadingEl = document.getElementById("loading");
+      const panel = document.getElementById("panel");
+
+      try {
+        const adapter = new MajorDoMoHassAdapter();
+        await adapter.init(panel);
+
+        // Hide loading screen once ready
+        loadingEl.style.opacity = "0";
+        setTimeout(() => loadingEl.remove(), 400);
+      } catch (err) {
+        console.error("NeonPlan 3D Initialization Error:", err);
+        loadingEl.innerHTML = `
+          <div style="color: #ff5252; text-align: center; padding: 20px;">
+            <h3>Ошибка загрузки NeonPlan 3D</h3>
+            <p>${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>
