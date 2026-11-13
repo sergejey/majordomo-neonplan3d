@@ -270,6 +270,17 @@ export class MajorDoMoHassAdapter {
         if (prop === 'status') {
           newState = (parseInt(value, 10) === 1) ? 'off' : 'on';
         }
+      } else if (id.startsWith('camera.')) {
+        // Camera device
+        if (prop === 'snapshotPreviewURL' || prop === 'snapshotURL') {
+          let url = String(value);
+          if (url && !/^https?:\/\//i.test(url) && !url.startsWith('/')) {
+            url = '/' + url;
+          }
+          newAttrs.entity_picture = url;
+        } else if (prop === 'status') {
+          newState = parseInt(value, 10) ? 'recording' : 'idle';
+        }
       } else if (tempMatch) {
         // sensor temperature sub-entity
         if (prop === 'value') newState = String(value);

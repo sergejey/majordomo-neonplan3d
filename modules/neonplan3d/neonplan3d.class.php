@@ -403,21 +403,21 @@ class neonplan3d extends module
                 return ['revision' => $new_rev];
 
             case 'neonplan3d/image/get':
-                $img_id = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $msg['id'] ?? '');
+                $img_id = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $msg['image_id'] ?? ($msg['id'] ?? ''));
                 $file = $this->storage_dir . 'images/' . $img_id;
                 $content = file_exists($file) ? file_get_contents($file) : null;
-                return ['image' => $content];
+                return ['image' => $content, 'data' => $content];
 
             case 'neonplan3d/image/set':
-                $img_id = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $msg['id'] ?? '');
-                $data = $msg['image'] ?? '';
+                $img_id = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $msg['image_id'] ?? ($msg['id'] ?? ''));
+                $data = $msg['data'] ?? ($msg['image'] ?? '');
                 if ($img_id && $data) {
                     file_put_contents($this->storage_dir . 'images/' . $img_id, $data);
                 }
                 return null;
 
             case 'neonplan3d/image/delete':
-                $img_id = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $msg['id'] ?? '');
+                $img_id = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $msg['image_id'] ?? ($msg['id'] ?? ''));
                 $file = $this->storage_dir . 'images/' . $img_id;
                 if (file_exists($file)) @unlink($file);
                 return null;
@@ -426,7 +426,8 @@ class neonplan3d extends module
                 $plan_id = preg_replace('/[^a-zA-Z0-9_\-]/', '', $msg['plan'] ?? 'main');
                 $hist_file = $this->storage_dir . 'history/' . $plan_id . '.json';
                 $history = file_exists($hist_file) ? json_decode(file_get_contents($hist_file), true) : [];
-                return ['points' => is_array($history) ? $history : []];
+                $arr = is_array($history) ? $history : [];
+                return ['snapshots' => $arr, 'points' => $arr];
 
             case 'neonplan3d/history/snapshot':
                 $plan_id = preg_replace('/[^a-zA-Z0-9_\-]/', '', $msg['plan'] ?? 'main');
@@ -445,7 +446,7 @@ class neonplan3d extends module
 
             case 'neonplan3d/history/restore':
                 $plan_id = preg_replace('/[^a-zA-Z0-9_\-]/', '', $msg['plan'] ?? 'main');
-                $snap_id = $msg['id'] ?? '';
+                $snap_id = $msg['snapshot_id'] ?? ($msg['id'] ?? '');
                 $hist_file = $this->storage_dir . 'history/' . $plan_id . '.json';
                 $history = file_exists($hist_file) ? json_decode(file_get_contents($hist_file), true) : [];
                 foreach ($history as $h) {
@@ -455,6 +456,9 @@ class neonplan3d extends module
                     }
                 }
                 return ['error' => 'Snapshot not found'];
+
+            case 'neonplan3d/plans/locate':
+                return ['plan' => $msg['plan'] ?? 'main'];
 
             case 'neonplan3d/packs/list':
                 return [
@@ -474,10 +478,13 @@ class neonplan3d extends module
                                 'sound',
                                 'auto_pro',
                                 'time_travel',
+                                'pool',
                                 'household',
+                                'frames',
+                                'fridge_smart',
                                 'fun_pets',
                                 'fun_halloween',
-                                'pool'
+                                'fun_winter'
                             ],
                             'items' => []
                         ]
@@ -492,12 +499,25 @@ class neonplan3d extends module
                     'licensee' => 'MajorDoMo',
                     'checked_at' => time(),
                     'error' => null,
+                    'shop_url' => 'https://mastershort.de/neonplan3d/',
                     'packs' => [],
                     'offers' => []
                 ];
 
             case 'neonplan3d/screens/list':
                 return ['screens' => []];
+
+            case 'neonplan3d/screens/reload':
+                return ['sent' => true];
+
+            case 'neonplan3d/voice/settings':
+                return ['sentences' => 'off'];
+
+            case 'neonplan3d/modules/code':
+                return ['code' => ''];
+
+            case 'neonplan3d/diagnostics/get':
+                return ['enabled' => false];
 
             default:
                 return null;
@@ -752,7 +772,29 @@ class neonplan3d extends module
                 case 'camera':
                     $domain = 'camera';
                     $state_val = 'idle';
-                    $attrs['entity_picture'] = gg($obj . '.snapshotURL') ?: gg($obj . '.streamURL');
+
+                    $preview = gg($obj . '.snapshotPreviewURL');
+                    if (!$preview) {
+                        callMethod($obj . '.updatePreview');
+                        $preview = gg($obj . '.snapshotPreviewURL');
+                    }
+                    if (!$preview) {
+                        $snap = gg($obj . '.snapshotURL');
+                        // Use snapshotURL only if it is not an RTSP stream
+                        if ($snap && !preg_match('/^rtsp:\/\//i', $snap)) {
+                            $preview = $snap;
+                        }
+                    }
+                    if ($preview && !preg_match('/^https?:\/\//i', $preview) && !preg_match('/^\//', $preview)) {
+                        $preview = '/' . $preview;
+                    }
+
+                    $attrs['entity_picture'] = $preview ?: '';
+                    $attrs['model'] = 'camera';
+                    $attrs['brand'] = 'MajorDoMo';
+                    $stream = gg($obj . '.streamURL');
+                    if (!$stream) $stream = gg($obj . '.streamURL_HQ');
+                    if ($stream) $attrs['stream_source'] = $stream;
                     break;
 
                 default:
@@ -864,6 +906,10 @@ class neonplan3d extends module
                 callMethod($obj_name . '.start');
             } elseif ($service == 'return_to_base') {
                 callMethod($obj_name . '.pause');
+            } elseif ($service == 'update_preview' || $service == 'snapshot') {
+                callMethod($obj_name . '.updatePreview');
+            } elseif ($service == 'take_snapshot') {
+                callMethod($obj_name . '.takeSnapshot');
             }
         }
         return true;
